@@ -13,34 +13,87 @@ main{width:min(100%,560px);padding:28px 22px 24px;text-align:center;border:2px s
 .ducks{font-size:30px;letter-spacing:12px;margin-bottom:4px}
 h1{margin:0;color:#e6a900;font-size:clamp(34px,8vw,52px);line-height:1.05;font-weight:950;letter-spacing:-.05em;text-shadow:1px 2px 0 #4b3512}
 .instruction{margin:13px 0 22px;color:#5e5545;font-weight:650;font-size:15px}
-.patito{display:block;width:min(100%,360px);aspect-ratio:1;margin:auto;padding:0;overflow:hidden;border:5px solid #ffd84c;border-radius:24px;background:#eee;cursor:pointer;box-shadow:0 12px 28px #47320e2a;transition:transform .18s,box-shadow .18s;-webkit-tap-highlight-color:transparent}
-.patito:hover{transform:translateY(-3px);box-shadow:0 17px 34px #47320e36}
-.patito:active{transform:scale(.985)}
-.patito img{display:block;width:100%;height:100%;object-fit:cover}
-.status{margin:19px 0 0;min-height:25px;font-weight:850;color:#6d5012;font-size:18px}
+.stage{position:relative;display:block;width:min(100%,300px);aspect-ratio:1;margin:auto;padding:0;overflow:hidden;border:5px solid #ffd84c;border-radius:24px;background:#eee;cursor:pointer;box-shadow:0 12px 28px #47320e2a;transition:transform .18s,box-shadow .18s;-webkit-tap-highlight-color:transparent}
+.stage:hover{transform:translateY(-3px);box-shadow:0 17px 34px #47320e36}
+.stage:active{transform:scale(.985)}
+.stage canvas,.stage img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
+.stage img{opacity:0;transition:opacity .05s}
+.stage.playing img{opacity:1}
+.stage.playing canvas{opacity:0}
+.status{margin:19px 0 0;min-height:25px;font-weight:900;color:#6d5012;font-size:19px}
 .footer{margin:9px 0 0;color:#a08d67;font-size:12px}
 button:focus-visible{outline:4px solid #a7794f;outline-offset:5px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
 </style>
 </head>
 <body>
 <main>
 <div class="ducks" aria-hidden="true">🐥 🐤 🐥</div>
 <h1>Patito Boquitas</h1>
-<p class="instruction">Pícale al patito para volver a iniciar su animación.</p>
-<button class="patito" id="patito" type="button" aria-label="Reiniciar la animación de Patito Boquitas">
-<img id="gif" src="assets/patito-boquitas.gif" alt="Patito Boquitas abre y cierra la boca en una animación">
+<p class="instruction">Toca la imagen para que abra la boca y diga quack quack.</p>
+<button class="stage" id="stage" type="button" aria-label="Reproducir la animación de Patito Boquitas" aria-pressed="false">
+<canvas id="still" width="192" height="192" aria-hidden="true"></canvas>
+<img id="animation" alt="Patito Boquitas abre la boca y dice Quack Quack">
 </button>
-<p class="status" id="status" aria-live="polite">¡Cuac, cuac! 🐤</p>
-<p class="footer">Un clic y vuelve a empezar.</p>
+<p class="status" id="status" aria-live="polite">¡Listo para hacer QUACK! 🐤</p>
+<p class="footer">Un toque para reproducir. Otro para detener.</p>
 </main>
 <script>
-const button=document.querySelector("#patito");
-const gif=document.querySelector("#gif");
+const gifPath="assets/patito-boquitas.gif";
+const stage=document.querySelector("#stage");
+const canvas=document.querySelector("#still");
+const ctx=canvas.getContext("2d");
+const animation=document.querySelector("#animation");
 const status=document.querySelector("#status");
-button.addEventListener("click",()=>{
-  const src="assets/patito-boquitas.gif";
-  gif.src=src+"?restart="+Date.now();
-  status.textContent="¡Otra vez, cuac! 🐥";
+const preload=new Image();
+let playing=false;
+let stopTimer=null;
+let quackTimers=[];
+let audioContext=null;
+
+preload.onload=()=>{ctx.drawImage(preload,0,0,canvas.width,canvas.height);};
+preload.src=gifPath;
+
+function quack(){
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return;
+  audioContext ||= new AudioContextClass();
+  if(audioContext.state==="suspended")audioContext.resume();
+  const now=audioContext.currentTime;
+  const osc=audioContext.createOscillator();
+  const filter=audioContext.createBiquadFilter();
+  const gain=audioContext.createGain();
+  osc.type="sawtooth";
+  osc.frequency.setValueAtTime(520,now);
+  osc.frequency.exponentialRampToValueAtTime(155,now+0.19);
+  filter.type="lowpass";
+  filter.frequency.setValueAtTime(1100,now);
+  filter.frequency.exponentialRampToValueAtTime(520,now+0.2);
+  gain.gain.setValueAtTime(0.0001,now);
+  gain.gain.exponentialRampToValueAtTime(0.22,now+0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001,now+0.22);
+  osc.connect(filter);filter.connect(gain);gain.connect(audioContext.destination);
+  osc.start(now);osc.stop(now+0.23);
+}
+function stop(){
+  playing=false;
+  clearTimeout(stopTimer);
+  quackTimers.forEach(clearTimeout);
+  quackTimers=[];
+  stage.classList.remove("playing");
+  stage.setAttribute("aria-pressed","false");
+  animation.removeAttribute("src");
+  status.textContent="¡Listo para hacer QUACK! 🐤";
+}
+stage.addEventListener("click",()=>{
+  if(playing){stop();return;}
+  playing=true;
+  stage.classList.add("playing");
+  stage.setAttribute("aria-pressed","true");
+  status.textContent="¡QUACK! ¡QUACK! 🐥";
+  animation.src=gifPath+"?play="+Date.now();
+  quackTimers=[setTimeout(quack,320),setTimeout(quack,555)];
+  stopTimer=setTimeout(stop,820);
 });
 </script>
 </body>
