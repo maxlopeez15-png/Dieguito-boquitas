@@ -1,8 +1,8 @@
 {
-  "name": "diego-interactivo",
+  "name": "patito-boquitas",
   "version": "1.0.0",
   "private": true,
-  "description": "Una página interactiva para hacer hablar a Diego.",
+  "description": "Página interactiva de Patito Boquitas con animación GIF.",
   "scripts": {
     "start": "node server.js"
   }
