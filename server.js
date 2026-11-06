@@ -10,6 +10,7 @@ const types = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
+  ".gif": "image/gif",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon"
 };
@@ -51,5 +52,5 @@ http.createServer((req, res) => {
     fs.createReadStream(filePath).pipe(res);
   });
 }).listen(Number(process.env.PORT) || 3000, "0.0.0.0", () => {
-  console.log("Diego interactivo listo en el puerto " + (process.env.PORT || 3000));
+  console.log("Patito Boquitas listo en el puerto " + (process.env.PORT || 3000));
 });
