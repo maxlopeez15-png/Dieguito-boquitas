@@ -1,0 +1,9 @@
+{
+  "name": "diego-interactivo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Una página interactiva para hacer hablar a Diego.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
